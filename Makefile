@@ -1,45 +1,25 @@
-# Compiler
-CC = i686-elf-gcc
-ASM = nasm
+asm_source_files := $(shell find src -name *.asm)
+asm_object_files := $(patsubst src/%.asm, build/%.o, $(asm_source_files))
 
-# Compiler flags
-CFLAGS = -std=gnu99 -ffreestanding -O2 -Wall -Wextra
-ASMFLAGS = -f elf32
+c_source_files := $(shell find src -name *.c)
+c_object_files := $(patsubst src/%.c, build/%.o, $(c_source_files))
 
-# Directories
-SRC_DIR = src
-BUILD_DIR = build
+object_files := $(c_object_files) $(asm_object_files)
 
-# Source files
-C_SOURCES := $(wildcard $(SRC_DIR)/*.c)
-ASM_SOURCES := $(wildcard $(SRC_DIR)/*.asm)
+$(c_object_files): build/%.o : src/%.c
+	mkdir -p $(dir $@) && \
+	i686-elf-gcc -c -std=gnu99 -ffreestanding -O2 -Wall -Wextra $(patsubst build/%.o, src/%.c, $@) -o $@
 
-# Object files
-C_OBJECTS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(C_SOURCES))
-ASM_OBJECTS := $(patsubst $(SRC_DIR)/%.asm, $(BUILD_DIR)/%.o, $(ASM_SOURCES))
+$(asm_object_files): build/%.o : src/%.asm
+	mkdir -p $(dir $@) && \
+	nasm -felf32 $(patsubst build/%.o, src/%.asm, $@) -o $@
 
-# Target executable
-TARGET = my_os
-
-.PHONY: all clean
-
-all: $(BUILD_DIR) $(TARGET)
-
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
-
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) $< -o $@
-
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.asm
-	$(ASM) $(ASMFLAGS) $< -o $@
-
-$(TARGET): $(C_OBJECTS) $(ASM_OBJECTS)
-	$(CC) -T linker.ld -o $(BUILD_DIR)/$(TARGET).bin -ffreestanding -O2 -nostdlib $(C_OBJECTS) $(ASM_OBJECTS) -lgcc && \
+.PHONY: build
+build: $(object_files)
 	mkdir -p isodir/boot/grub && \
-	cp myos.bin isodir/boot/myos.bin && \
+	i686-elf-gcc -n -o isodir/boot/kernel.bin -T src/linker.ld -ffreestanding -O2 -nostdlib -lgcc $(object_files) && \
 	cp grub.cfg isodir/boot/grub/grub.cfg && \
-	grub-mkrescue -o myos.iso isodir
+	grub-mkrescue -o kernel.iso isodir
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf kernel.iso isodir build
