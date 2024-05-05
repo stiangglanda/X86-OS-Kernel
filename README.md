@@ -20,6 +20,11 @@ Enter build environment:
 
 To leave the build environment, enter `exit`.
 
+### Using Make
+
+`make build`
+
+### Manual
 - `nasm -felf32 src/boot.asm -o boot.o`
 - `i686-elf-gcc -c src/kernel.c -o kernel.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra`
 - `i686-elf-gcc -T src/linker.ld -o os.bin -ffreestanding -O2 -nostdlib boot.o kernel.o -lgcc`
