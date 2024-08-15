@@ -41,3 +41,7 @@ To leave the build environment, enter `exit`.
 
 Remove the build-evironment image:
  - `docker rmi os-buildenv -f`
+
+
+https://github.com/user-attachments/assets/b4b1acdb-35e9-4001-a2e1-19d0331125bc
+
