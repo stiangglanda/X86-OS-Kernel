@@ -1,3 +1,4 @@
+#include "gdt.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -103,11 +104,47 @@ void terminal_writestring(const char* data)
 {
 	terminal_write(data, strlen(data));
 }
- 
+
+void test_gdt(void) {
+    terminal_writestring("Test 1: Checking GDT segments...\n");
+    
+    // Try to write to NULL segment
+    terminal_writestring("Writing to NULL segment (0x00)...\n");
+    uint32_t *null_ptr = (uint32_t*)0x00;
+    *null_ptr = 0;  // Should fault
+    
+    terminal_writestring("NULL segment write succeeded - BAD!\n");
+    
+    // Try to write to code segment
+    terminal_writestring("Writing to code segment (0x08)...\n");
+    uint32_t *code_ptr = (uint32_t*)0x08;
+    *code_ptr = 0;  // Should fault
+    
+    terminal_writestring("Code segment write succeeded - BAD!\n");
+    
+    // Try to execute from data segment
+    terminal_writestring("Trying to jump to data segment (0x10)...\n");
+    void (*data_ptr)(void) = (void*)0x10;
+    data_ptr();  // Should fault
+    
+    terminal_writestring("Data segment execute succeeded - BAD!\n");
+}
+
 void kernel_main(void) 
 {
-	/* Initialize terminal interface */
-	terminal_initialize();
+    /* Initialize GDT */
+    gdt_install();
+    
+    /* Initialize terminal interface */
+    terminal_initialize();
+ 
+    terminal_writestring("GDT installed...\n");
+    
+    // Simple test - try accessing different segments
+    terminal_writestring("Testing GDT...\n");
+    test_gdt();  // This should cause a fault
+    
+    terminal_writestring("If you see this, GDT protection failed!\n");
  
 	/* Newline support is left as an exercise. */
 	terminal_writestring("Hello, kernel World!\n");
