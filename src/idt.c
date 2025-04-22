@@ -1,5 +1,7 @@
 #include "idt.h"
 
+extern void isr0(void);  // Add this declaration at the top
+
 __attribute__((aligned(0x10)))
 struct idt_entry idt[256];
 struct idtr idtp;
@@ -21,6 +23,9 @@ void idt_init(void) {
     for (int i = 0; i < 256; i++) {
         idt_set_gate(i, 0, 0, 0);
     }
+
+    // Install the ISRs
+    idt_set_gate(0, (uint32_t)isr0, KERNEL_CS, IDT_GATE_TYPE_INTERRUPT);
 
     // Load the IDT pointer
     __asm__ volatile ("lidt %0" : : "m" (idtp));

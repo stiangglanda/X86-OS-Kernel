@@ -16,36 +16,31 @@
 #endif
  
 
-
 void test_gdt(void) {
     terminal_writestring("Test 1: Checking GDT segments...\n");
     
-    // Try to write to NULL segment
-    terminal_writestring("Writing to NULL segment (0x00)...\n");
-    uint32_t *null_ptr = (uint32_t*)0x00;
-    *null_ptr = 0;  // Should fault
-    
-    terminal_writestring("NULL segment write succeeded - BAD!\n");
-    
     // Try to write to code segment
-    terminal_writestring("Writing to code segment (0x08)...\n");
-    uint32_t *code_ptr = (uint32_t*)0x08;
-    *code_ptr = 0;  // Should fault
+    terminal_writestring("Writing to code segment...\n");
     
-    terminal_writestring("Code segment write succeeded - BAD!\n");
+    // Direct attempt to write to code segment using CS selector
+    asm volatile(
+        "mov $0x08, %%ax\n"    // Load code segment selector (0x08)
+        "mov %%ax, %%ds\n"     // Try to use code segment as data segment
+        "movl $0, (0x1000)"    // Try to write to memory through segment
+        :
+        :
+        : "ax", "memory"
+    );
     
-    // Try to execute from data segment
-    terminal_writestring("Trying to jump to data segment (0x10)...\n");
-    void (*data_ptr)(void) = (void*)0x10;
-    data_ptr();  // Should fault
-    
-    terminal_writestring("Data segment execute succeeded - BAD!\n");
+    // If we get here, protection failed
+    terminal_writestring("Code segment write succeeded - GDT protection failed!\n");
 }
 
 void test_interrupt(void) {
+    terminal_writestring("Testing division by zero...\n");
     int a = 10;
     int b = 0;
-    int c = a / b;  // This will trigger a division by zero exception
+    __asm__ volatile("div %0" : : "r" (b));  // Force division by zero
 }
 
 void kernel_main(void) 
@@ -64,7 +59,7 @@ void kernel_main(void)
     // Simple test - try accessing different segments
     terminal_writestring("Testing GDT...\n");
     //test_gdt();  // This should cause a fault
-
+    __asm__ volatile ("sti");
 	test_interrupt();
     
     terminal_writestring("If you see this, GDT protection failed!\n");
