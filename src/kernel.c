@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "pic.h"
 #include "terminal.h"
  
 /* Check if the compiler thinks you are targeting the wrong operating system. */
@@ -50,6 +51,9 @@ void kernel_main(void)
 
     /* Initialize IDT */
 	idt_init();
+
+    /* Initialize PIC */
+    pic_init();
     
     /* Initialize terminal interface */
     terminal_initialize();
@@ -60,7 +64,7 @@ void kernel_main(void)
     terminal_writestring("Testing GDT...\n");
     //test_gdt();  // This should cause a fault
     __asm__ volatile ("sti");
-	test_interrupt();
+	//test_interrupt();
     
     terminal_writestring("If you see this, GDT protection failed!\n");
  
