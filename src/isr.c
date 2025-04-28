@@ -1,5 +1,6 @@
 #include "isr.h"
 #include "terminal.h"
+#include "keyboard.h"
 
 // Array of messages for the first 32 CPU exceptions
 static const char *exception_messages[] = {
@@ -42,8 +43,8 @@ void isr_handler(struct registers *r) {
         terminal_writestring("Received interrupt: ");
         terminal_writestring(exception_messages[r->int_no]);
         terminal_writestring("\n");
-        
-        // For now, just halt the system
         for(;;);
+    } else if (r->int_no == 33) {
+        keyboard_handler();
     }
 }

@@ -1,6 +1,7 @@
 #include "idt.h"
 
-extern void isr0(void);  // Add this declaration at the top
+extern void isr0(void);
+extern void isr33(void);  // Add this line for keyboard interrupt
 
 __attribute__((aligned(0x10)))
 struct idt_entry idt[256];
@@ -26,6 +27,9 @@ void idt_init(void) {
 
     // Install the ISRs
     idt_set_gate(0, (uint32_t)isr0, KERNEL_CS, IDT_GATE_TYPE_INTERRUPT);
+
+    // Install the keyboard ISR (IRQ1 maps to interrupt 33)
+    idt_set_gate(33, (uint32_t)isr33, KERNEL_CS, IDT_GATE_TYPE_INTERRUPT);
 
     // Load the IDT pointer
     __asm__ volatile ("lidt %0" : : "m" (idtp));

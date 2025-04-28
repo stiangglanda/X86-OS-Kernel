@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "pic.h"
 #include "terminal.h"
+#include "keyboard.h"
  
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -50,24 +51,23 @@ void kernel_main(void)
     gdt_install();
 
     /* Initialize IDT */
-	idt_init();
+    idt_init();
 
     /* Initialize PIC */
     pic_init();
     
     /* Initialize terminal interface */
     terminal_initialize();
- 
-    terminal_writestring("GDT installed...\n");
     
-    // Simple test - try accessing different segments
-    terminal_writestring("Testing GDT...\n");
-    //test_gdt();  // This should cause a fault
+    /* Initialize keyboard */
+    keyboard_init();
+    
+    /* Enable interrupts */
     __asm__ volatile ("sti");
-	//test_interrupt();
     
-    terminal_writestring("If you see this, GDT protection failed!\n");
- 
-	/* Newline support is left as an exercise. */
-	terminal_writestring("Hello, kernel World!\n");
+    terminal_writestring("System initialized!\n");
+    terminal_writestring("Start typing...\n");
+
+    // Main loop
+    //for(;;);
 }
