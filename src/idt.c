@@ -33,5 +33,5 @@ void idt_init(void) {
 
     // Load the IDT pointer
     __asm__ volatile ("lidt %0" : : "m" (idtp));
-    __asm__ volatile ("sti"); // set the interrupt flag
+    //__asm__ volatile ("sti"); // set the interrupt flag
 }

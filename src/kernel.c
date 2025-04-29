@@ -63,11 +63,11 @@ void kernel_main(void)
     keyboard_init();
     
     /* Enable interrupts */
-    __asm__ volatile ("sti");
+    //__asm__ volatile ("sti");
     
     terminal_writestring("System initialized!\n");
     terminal_writestring("Start typing...\n");
 
     // Main loop
-    //for(;;);
+    for(;;);
 }
