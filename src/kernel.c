@@ -47,27 +47,28 @@ void test_interrupt(void) {
 
 void kernel_main(void) 
 {
-    /* Initialize GDT */
-    gdt_install();
-
-    /* Initialize IDT */
-    idt_init();
-
-    /* Initialize PIC */
-    pic_init();
-    
-    /* Initialize terminal interface */
     terminal_initialize();
-    
-    /* Initialize keyboard */
-    keyboard_init();
-    
-    /* Enable interrupts */
-    //__asm__ volatile ("sti");
-    
-    terminal_writestring("System initialized!\n");
-    terminal_writestring("Start typing...\n");
+    terminal_writestring("Terminal initialized\n");
 
-    // Main loop
+    gdt_install();
+    terminal_writestring("GDT installed\n");
+
+    idt_init();
+    terminal_writestring("IDT installed\n");
+
+    // Disable interrupts until we're ready
+    __asm__ volatile ("cli");
+    
+    // Initialize PIC if you have it
+    // pic_init();
+    // terminal_writestring("PIC initialized\n");
+
+    // Now enable interrupts
+    __asm__ volatile ("sti");
+    terminal_writestring("Interrupts enabled\n");
+
+    // Test if we can continue executing
+    terminal_writestring("System running...\n");
+
     for(;;);
 }
