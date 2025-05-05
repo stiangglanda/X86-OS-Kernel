@@ -22,78 +22,88 @@
 isr_common_stub:
     ; Save registers
     pusha
+    
+    ; Save data segments
     mov ax, ds
-    push eax        ; Save data segment
-
+    push eax
+    
     ; Load kernel data segment
-    mov ax, 0x10    ; Kernel data segment with ring 0
+    mov ax, 0x10    ; Kernel data segment
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
-
+    
+    ; Push pointer to stack structure as argument to handler
+    push esp
+    
     ; Call C handler
     call isr_handler
-
-    ; Restore segments
-    pop eax         ; Reload original data segment
+    
+    ; Remove pushed stack pointer
+    add esp, 4
+    
+    ; Restore data segments
+    pop eax
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
-
+    
     ; Restore registers
     popa
-    add esp, 8      ; Clean error code and interrupt number
-    iret            ; Return from interrupt
+    
+    ; Cleanup error code and interrupt number
+    add esp, 8
+    iret
 
-; CPU Exception handlers
+; Divide by zero handler
 isr0:
     cli
-    push byte 0     ; Push dummy error code
-    push byte 0     ; Push interrupt number
+    push dword 0    ; Push error code (zero)
+    push dword 0    ; Push interrupt number (zero)
     jmp isr_common_stub
 
 isr1:
     cli
-    push byte 0
-    push byte 1
+    push dword 0
+    push dword 1
     jmp isr_common_stub
 
 isr2:
     cli
-    push byte 0
-    push byte 2
+    push dword 0
+    push dword 2
     jmp isr_common_stub
 
 isr3:
     cli
-    push byte 0
-    push byte 3
+    push dword 0
+    push dword 3
     jmp isr_common_stub
 
 isr4:
     cli
-    push byte 0
-    push byte 4
+    push dword 0
+    push dword 4
     jmp isr_common_stub
 
 isr5:
     cli
-    push byte 0
-    push byte 5
+    push dword 0
+    push dword 5
     jmp isr_common_stub
 
 isr6:
     cli
-    push byte 0
-    push byte 6
+    push dword 0
+    push dword 6
     jmp isr_common_stub
 
 isr7:
     cli
-    push byte 0
-    push byte 7
+    push dword 0
+    push dword 7
     jmp isr_common_stub
 
 ; Double Fault handler
@@ -105,42 +115,42 @@ isr8:
 
 isr9:
     cli
-    push byte 0
-    push byte 9
+    push dword 0
+    push dword 9
     jmp isr_common_stub
 
 isr10:
     cli
     ; Error code already pushed
-    push byte 10
+    push dword 10
     jmp isr_common_stub
 
 isr11:
     cli
     ; Error code already pushed
-    push byte 11
+    push dword 11
     jmp isr_common_stub
 
 isr12:
     cli
     ; Error code already pushed
-    push byte 12
+    push dword 12
     jmp isr_common_stub
 
 isr13:
     cli
     ; Error code already pushed
-    push byte 13
+    push dword 13
     jmp isr_common_stub
 
 isr14:
     cli
     ; Error code already pushed
-    push byte 14
+    push dword 14
     jmp isr_common_stub
 
 isr128:
     cli
-    push byte 0
-    push byte 128
+    push dword 0
+    push dword 128
     jmp isr_common_stub

@@ -64,11 +64,16 @@ void itoa(int num, char* str, int base) {
 }
 
 void isr_handler(struct registers* regs) {
+    terminal_writestring("Interrupt received: ");
+    char str[32];
+    itoa(regs->int_no, str, 10);
+    terminal_writestring(str);
+    terminal_writestring("\n");
+
     if (regs->int_no < 32) {
         terminal_writestring("EXCEPTION: ");
         terminal_writestring(exception_messages[regs->int_no]);
         terminal_writestring("\nError Code: 0x");
-        char str[32];
         itoa(regs->err_code, str, 16);
         terminal_writestring(str);
         terminal_writestring("\nEIP: 0x");
@@ -87,7 +92,11 @@ void isr_handler(struct registers* regs) {
         itoa(regs->esp, str, 16);
         terminal_writestring(str);
         terminal_writestring("\nSystem Halted!\n");
-        for(;;);
+        
+        // Add infinite loop to prevent continuing after exception
+        for(;;) {
+            asm volatile("hlt");
+        }
     }
     else if (regs->int_no == ISR_SYSCALL) {
         terminal_writestring("Syscall received!\n");

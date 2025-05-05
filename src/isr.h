@@ -23,10 +23,14 @@
 #define ISR_SYSCALL         128
 
 struct registers {
-    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha
-    uint32_t ds;                                      // Data segment
-    uint32_t int_no, err_code;                        // Interrupt info
-    uint32_t eip, cs, eflags, useresp, ss;           // Pushed by CPU
+    // Pushed by pusha
+    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
+    // Pushed by our ASM stub
+    uint32_t ds;
+    // Pushed by CPU/ASM stub
+    uint32_t int_no, err_code;
+    // Automatically pushed by the processor
+    uint32_t eip, cs, eflags;
 } __attribute__((packed));
 
 void isr_handler(struct registers* regs);

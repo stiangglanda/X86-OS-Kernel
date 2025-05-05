@@ -36,20 +36,24 @@ void kernel_main(void)
     
     terminal_writestring("System running...\n");
     
-    terminal_writestring("Triggering divide by zero...\n");
-    
-    // Cause a divide by zero exception using inline assembly
-    asm volatile(
-        "mov $0, %%ecx\n"    // Set divisor to 0
-        "mov $10, %%eax\n"   // Set dividend to 10
-        "div %%ecx"          // Divide eax by ecx (will cause divide by zero)
-        :                    // No outputs
-        :                    // No inputs
-        : "eax", "ecx"      // Clobbers eax and ecx
-    );
-    
-    terminal_writestring("This line should not be reached\n");
+    terminal_writestring("Triggering software interrupt...\n");
+    // Test software interrupt
+    //asm volatile("int $0x80");
 
+    //// Cause a divide by zero exception using inline assembly
+    //asm volatile(
+    //    "mov $0, %%ecx\n"    // Set divisor to 0
+    //    "mov $10, %%eax\n"   // Set dividend to 10
+    //    "div %%ecx"          // Divide eax by ecx (will cause divide by zero)
+    //    :                    // No outputs
+    //    :                    // No inputs
+    //    : "eax", "ecx"      // Clobbers eax and ecx
+    //);
+    
+    terminal_writestring("After interrupt\n");
+    terminal_writestring("Entering infinite loop...\n");
+
+    // More stable infinite loop with a halt instruction
     while(1) {
         asm volatile("hlt");
     }
