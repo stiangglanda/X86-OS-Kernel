@@ -29,27 +29,40 @@ static inline void outb(uint16_t port, uint8_t val) {
 }
 
 void keyboard_handler(struct registers* regs) {
+    // Read scancode directly without checking status first
     uint8_t scancode = inb(KEYBOARD_DATA_PORT);
     
-    // Only handle key press events (ignore key release)
-    if (scancode < 128) {
+    // Debug output
+    terminal_writestring("\nReceived scancode: 0x");
+    char debug[32];
+    itoa(scancode, debug, 16);
+    terminal_writestring(debug);
+    
+    // Handle key press (ignore releases and special codes)
+    if (!(scancode & 0x80) && scancode < sizeof(scancode_to_ascii)) {
         char ascii = scancode_to_ascii[scancode];
         if (ascii != 0) {
             terminal_putchar(ascii);
+            terminal_writestring(" (ASCII: ");
+            terminal_putchar(ascii);
+            terminal_writestring(")\n");
         }
     }
-    
-    // Send EOI
+
+    // Just send EOI - don't try to clear buffer or wait
     pic_send_eoi(KEYBOARD_IRQ);
 }
 
 void keyboard_initialize(void) {
-    // Register keyboard handler for IRQ1
-    idt_set_gate(IRQ1 + 32, (uint32_t)keyboard_handler, 0x08, 0x8E);
+    terminal_writestring("Keyboard: Starting initialization...\n");
     
-    // Unmask the keyboard IRQ
-    // TODO: Add function to PIC to unmask specific IRQ
-    outb(PIC1_DATA, inb(PIC1_DATA) & ~(1 << KEYBOARD_IRQ));
+    // Register IRQ handler
+    idt_set_gate(33, (uint32_t)keyboard_handler, 0x08, 0x8E);
+    
+    // Enable keyboard IRQ
+    pic_unmask_irq(1);
+    
+    terminal_writestring("Keyboard initialized\n");
 }
 
 char keyboard_getchar(void) {

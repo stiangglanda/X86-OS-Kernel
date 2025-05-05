@@ -34,5 +34,6 @@ struct registers {
 } __attribute__((packed));
 
 void isr_handler(struct registers* regs);
+void itoa(int num, char* str, int base);
 
 #endif
