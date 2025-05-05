@@ -27,16 +27,16 @@ void gdt_initialize(void) {
     // Data segment: base=0, limit=4GB, gran=4KB blocks, 32-bit, ring0
     gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
 
-    // Load GDT and update segment registers
+    // Load GDT and flush segments
     asm volatile(
         "lgdt %0\n"
-        "movw $0x10, %%ax\n"
-        "movw %%ax, %%ds\n"
-        "movw %%ax, %%es\n"
-        "movw %%ax, %%fs\n"
-        "movw %%ax, %%gs\n"
-        "movw %%ax, %%ss\n"
-        "ljmp $0x08, $1f\n"
-        "1:\n"
-        : : "m"(gp) : "ax");
+        "mov $0x10, %%ax\n"  // 0x10 is offset to data segment
+        "mov %%ax, %%ds\n"
+        "mov %%ax, %%es\n"
+        "mov %%ax, %%fs\n"
+        "mov %%ax, %%gs\n"
+        "mov %%ax, %%ss\n"
+        "ljmp $0x08, $reload_cs\n"  // 0x08 is offset to code segment
+        "reload_cs:\n"
+        : : "m"(gp) : "eax");
 }

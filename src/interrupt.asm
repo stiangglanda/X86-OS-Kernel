@@ -20,34 +20,32 @@
 
 ; Common ISR stub that calls C handler
 isr_common_stub:
-    ; Save all registers and segments
+    ; Save registers
     pusha
-    mov ax, ds     ; Save the data segment
-    push eax
-    
+    mov ax, ds
+    push eax        ; Save data segment
+
     ; Load kernel data segment
-    mov ax, 0x10   ; Load kernel data segment descriptor
+    mov ax, 0x10    ; Kernel data segment with ring 0
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
-    
+
     ; Call C handler
-    push esp        ; Push pointer to register state
     call isr_handler
-    add esp, 4      ; Clean up pushed argument
-    
-    ; Restore segments and registers
-    pop eax        ; Restore original data segment
+
+    ; Restore segments
+    pop eax         ; Reload original data segment
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
+
+    ; Restore registers
     popa
-    
-    ; Clean up error code and interrupt number
-    add esp, 8     ; Clean error code and interrupt number
-    iret           ; Return from interrupt
+    add esp, 8      ; Clean error code and interrupt number
+    iret            ; Return from interrupt
 
 ; CPU Exception handlers
 isr0:
@@ -98,11 +96,11 @@ isr7:
     push byte 7
     jmp isr_common_stub
 
-; Double Fault handler (needs special care)
+; Double Fault handler
 isr8:
-    cli                    ; Disable interrupts
-    ; Note: CPU pushes error code automatically for #DF
-    push byte 8           ; Push interrupt number
+    cli            ; Disable interrupts
+    push dword 0   ; Push error code (even though CPU pushes one)
+    push dword 8   ; Push interrupt number
     jmp isr_common_stub
 
 isr9:
