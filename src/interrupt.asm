@@ -1,3 +1,4 @@
+; filepath: /home/stiangglanda/dev/X86-OS-Kernel/src/interrupt.asm
 [BITS 32]
 [GLOBAL isr0]
 [GLOBAL isr1]
@@ -8,108 +9,140 @@
 [GLOBAL isr6]
 [GLOBAL isr7]
 [GLOBAL isr8]
+[GLOBAL isr9]
+[GLOBAL isr10]
+[GLOBAL isr11]
+[GLOBAL isr12]
 [GLOBAL isr13]
 [GLOBAL isr14]
-[GLOBAL isr33]
+[GLOBAL isr128]
 [EXTERN isr_handler]
 
-; ISR handlers
+; Common ISR stub that calls C handler
+isr_common_stub:
+    ; Save all registers and segments
+    pusha
+    mov ax, ds     ; Save the data segment
+    push eax
+    
+    ; Load kernel data segment
+    mov ax, 0x10   ; Load kernel data segment descriptor
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    
+    ; Call C handler
+    push esp        ; Push pointer to register state
+    call isr_handler
+    add esp, 4      ; Clean up pushed argument
+    
+    ; Restore segments and registers
+    pop eax        ; Restore original data segment
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    popa
+    
+    ; Clean up error code and interrupt number
+    add esp, 8     ; Clean error code and interrupt number
+    iret           ; Return from interrupt
+
+; CPU Exception handlers
 isr0:
     cli
-    push dword 0    ; Push error code
-    push dword 0    ; Push interrupt number
+    push byte 0     ; Push dummy error code
+    push byte 0     ; Push interrupt number
     jmp isr_common_stub
 
 isr1:
     cli
-    push dword 0
-    push dword 1
+    push byte 0
+    push byte 1
     jmp isr_common_stub
 
 isr2:
     cli
-    push dword 0
-    push dword 2
+    push byte 0
+    push byte 2
     jmp isr_common_stub
 
 isr3:
     cli
-    push dword 0
-    push dword 3
+    push byte 0
+    push byte 3
     jmp isr_common_stub
 
 isr4:
     cli
-    push dword 0
-    push dword 4
+    push byte 0
+    push byte 4
     jmp isr_common_stub
 
 isr5:
     cli
-    push dword 0
-    push dword 5
+    push byte 0
+    push byte 5
     jmp isr_common_stub
 
 isr6:
     cli
-    push dword 0
-    push dword 6
+    push byte 0
+    push byte 6
     jmp isr_common_stub
 
 isr7:
     cli
-    push dword 0
-    push dword 7
+    push byte 0
+    push byte 7
     jmp isr_common_stub
 
+; Double Fault handler (needs special care)
 isr8:
+    cli                    ; Disable interrupts
+    ; Note: CPU pushes error code automatically for #DF
+    push byte 8           ; Push interrupt number
+    jmp isr_common_stub
+
+isr9:
     cli
-    ; Error code is pushed automatically
-    push dword 8
+    push byte 0
+    push byte 9
+    jmp isr_common_stub
+
+isr10:
+    cli
+    ; Error code already pushed
+    push byte 10
+    jmp isr_common_stub
+
+isr11:
+    cli
+    ; Error code already pushed
+    push byte 11
+    jmp isr_common_stub
+
+isr12:
+    cli
+    ; Error code already pushed
+    push byte 12
     jmp isr_common_stub
 
 isr13:
     cli
-    ; Error code is pushed automatically
-    push dword 13
+    ; Error code already pushed
+    push byte 13
     jmp isr_common_stub
 
 isr14:
     cli
-    ; Error code is pushed automatically
-    push dword 14
+    ; Error code already pushed
+    push byte 14
     jmp isr_common_stub
 
-isr33:
+isr128:
     cli
-    push dword 0
-    push dword 33
+    push byte 0
+    push byte 128
     jmp isr_common_stub
-
-; Common ISR stub that calls the C handler
-isr_common_stub:
-    pusha           ; Pushes edi,esi,ebp,esp,ebx,edx,ecx,eax
-
-    mov ax, ds      ; Save data segment
-    push eax
-
-    mov ax, 0x10    ; Load kernel data segment
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-
-    push esp        ; Push pointer to stack structure as argument
-    call isr_handler
-    add esp, 4      ; Remove pushed stack pointer
-
-    pop eax         ; Restore data segment
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-
-    popa            ; Restore registers
-    add esp, 8      ; Remove error code and interrupt number
-    sti             ; Re-enable interrupts
-    iret            ; Return from interrupt

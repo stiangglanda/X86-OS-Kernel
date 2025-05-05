@@ -1,54 +1,42 @@
 #include "gdt.h"
 
-// GDT entry structure using 64-bit descriptor format
-struct gdt_entry {
-    uint64_t descriptor;
-} __attribute__((packed));
-
-struct gdt_ptr {
-    uint16_t limit;
-    uint32_t base;
-} __attribute__((packed)) gp;
-
 struct gdt_entry gdt[3];
+struct gdt_ptr gp;
 
-uint64_t create_descriptor(uint32_t base, uint32_t limit, uint16_t flag)
-{
-    uint64_t descriptor;
-
-    // Create the high 32 bit segment
-    descriptor  = limit       & 0x000F0000;     // set limit bits 19:16
-    descriptor |= (flag <<  8) & 0x00F0FF00;     // set type, p, dpl, s, g, d/b, l and avl fields
-    descriptor |= (base >> 16) & 0x000000FF;     // set base bits 23:16
-    descriptor |= base        & 0xFF000000;     // set base bits 31:24
-
-    // Shift by 32 to allow for low part of segment
-    descriptor <<= 32;
-
-    // Create the low 32 bit segment
-    descriptor |= base  << 16;                   // set base bits 15:0
-    descriptor |= limit  & 0x0000FFFF;           // set limit bits 15:0
-
-    return descriptor;
+// Setup a GDT entry
+void gdt_set_gate(int num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran) {
+    gdt[num].base_low = (base & 0xFFFF);
+    gdt[num].base_middle = (base >> 16) & 0xFF;
+    gdt[num].base_high = (base >> 24) & 0xFF;
+    gdt[num].limit_low = (limit & 0xFFFF);
+    gdt[num].granularity = ((limit >> 16) & 0x0F) | (gran & 0xF0);
+    gdt[num].access = access;
 }
 
-extern void gdt_flush(uint32_t);
-
-void gdt_install(void)
-{
-    // Setup GDT pointer and limit
+// Initialize GDT
+void gdt_initialize(void) {
     gp.limit = (sizeof(struct gdt_entry) * 3) - 1;
     gp.base = (uint32_t)&gdt;
 
     // Null descriptor
-    gdt[0].descriptor = create_descriptor(0, 0, 0);
+    gdt_set_gate(0, 0, 0, 0, 0);
 
-    // Code segment descriptor
-    gdt[1].descriptor = create_descriptor(0, 0x000FFFFF, (GDT_CODE_PL0));
+    // Code segment: base=0, limit=4GB, gran=4KB blocks, 32-bit, ring0
+    gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
 
-    // Data segment descriptor
-    gdt[2].descriptor = create_descriptor(0, 0x000FFFFF, (GDT_DATA_PL0));
+    // Data segment: base=0, limit=4GB, gran=4KB blocks, 32-bit, ring0
+    gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
 
-    // Load GDT
-    gdt_flush((uint32_t)&gp);
+    // Load GDT and update segment registers
+    asm volatile(
+        "lgdt %0\n"
+        "movw $0x10, %%ax\n"
+        "movw %%ax, %%ds\n"
+        "movw %%ax, %%es\n"
+        "movw %%ax, %%fs\n"
+        "movw %%ax, %%gs\n"
+        "movw %%ax, %%ss\n"
+        "ljmp $0x08, $1f\n"
+        "1:\n"
+        : : "m"(gp) : "ax");
 }

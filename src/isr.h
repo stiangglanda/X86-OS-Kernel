@@ -3,13 +3,32 @@
 
 #include <stdint.h>
 
-typedef struct {
-    uint32_t ds;                                     // Data segment selector
-    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha
-    uint32_t int_no, err_code;                       // Interrupt number and error code
-    uint32_t eip, cs, eflags, useresp, ss;           // Pushed by the processor automatically
-} registers_t;
+// CPU exception numbers
+#define ISR_DIVIDE_BY_ZERO    0
+#define ISR_DEBUG             1
+#define ISR_NMI              2
+#define ISR_BREAKPOINT       3
+#define ISR_OVERFLOW         4
+#define ISR_BOUND_RANGE      5
+#define ISR_INVALID_OPCODE   6
+#define ISR_DEVICE_NOT_AVAILABLE 7
+#define ISR_DOUBLE_FAULT     8
+#define ISR_INVALID_TSS      10
+#define ISR_SEGMENT_NOT_PRESENT 11
+#define ISR_STACK_SEGMENT_FAULT 12
+#define ISR_GENERAL_PROTECTION 13
+#define ISR_PAGE_FAULT       14
+#define ISR_TIMER            32
+#define ISR_KEYBOARD         33
+#define ISR_SYSCALL         128
 
-void isr_handler(registers_t* regs);
+struct registers {
+    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax; // Pushed by pusha
+    uint32_t ds;                                      // Data segment
+    uint32_t int_no, err_code;                        // Interrupt info
+    uint32_t eip, cs, eflags, useresp, ss;           // Pushed by CPU
+} __attribute__((packed));
+
+void isr_handler(struct registers* regs);
 
 #endif

@@ -1,74 +1,50 @@
-#include "gdt.h"
-#include "idt.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "pic.h"
 #include "terminal.h"
-#include "keyboard.h"
- 
+#include "gdt.h"
+#include "idt.h"
+
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
 #endif
- 
+
 /* This tutorial will only work for the 32-bit ix86 targets. */
 #if !defined(__i386__)
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
- 
-
-void test_gdt(void) {
-    terminal_writestring("Test 1: Checking GDT segments...\n");
-    
-    // Try to write to code segment
-    terminal_writestring("Writing to code segment...\n");
-    
-    // Direct attempt to write to code segment using CS selector
-    asm volatile(
-        "mov $0x08, %%ax\n"    // Load code segment selector (0x08)
-        "mov %%ax, %%ds\n"     // Try to use code segment as data segment
-        "movl $0, (0x1000)"    // Try to write to memory through segment
-        :
-        :
-        : "ax", "memory"
-    );
-    
-    // If we get here, protection failed
-    terminal_writestring("Code segment write succeeded - GDT protection failed!\n");
-}
-
-void test_interrupt(void) {
-    terminal_writestring("Testing division by zero...\n");
-    int a = 10;
-    int b = 0;
-    __asm__ volatile("div %0" : : "r" (b));  // Force division by zero
-}
 
 void kernel_main(void) 
 {
     terminal_initialize();
-    terminal_writestring("Terminal initialized\n");
-
-    gdt_install();
-    terminal_writestring("GDT installed\n");
-
-    idt_init();
-    terminal_writestring("IDT installed\n");
-
-    // Disable interrupts until we're ready
-    __asm__ volatile ("cli");
+    terminal_writestring("Starting kernel...\n");
     
-    // Initialize PIC if you have it
-    // pic_init();
-    // terminal_writestring("PIC initialized\n");
+    terminal_writestring("Initializing GDT...\n");
+    gdt_initialize();
+    terminal_writestring("GDT initialized\n");
 
-    // Now enable interrupts
-    __asm__ volatile ("sti");
-    terminal_writestring("Interrupts enabled\n");
-
-    // Test if we can continue executing
+    terminal_writestring("Initializing IDT...\n");
+    idt_initialize();
+    terminal_writestring("IDT initialized\n");
+    
+    // Clear interrupts first
+    asm volatile("cli");
+    
+    // Enable interrupts
+    asm volatile("sti");
+    
     terminal_writestring("System running...\n");
+    
+    terminal_writestring("Triggering software interrupt...\n");
+    // Test software interrupt
+    //asm volatile("int $0x80");
+    
+    terminal_writestring("After interrupt\n");
+    terminal_writestring("Entering infinite loop...\n");
 
-    for(;;);
+    // More stable infinite loop with a halt instruction
+    while(1) {
+        asm volatile("hlt");
+    }
 }

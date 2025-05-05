@@ -1,8 +1,7 @@
 #include "isr.h"
 #include "terminal.h"
 
-// Array of messages for the first 32 CPU exceptions
-static const char *exception_messages[] = {
+static const char* exception_messages[] = {
     "Division By Zero",
     "Debug",
     "Non Maskable Interrupt",
@@ -21,49 +20,37 @@ static const char *exception_messages[] = {
     "Unknown Interrupt",
     "Coprocessor Fault",
     "Alignment Check",
-    "Machine Check",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved"
+    "Machine Check"
 };
 
-// Helper function to convert int to string
-void int_to_string(int num, char* str) {
+
+// Helper function for converting numbers to strings
+void itoa(int num, char* str, int base) {
+    int i = 0;
+    int isNegative = 0;
+
     if (num == 0) {
-        str[0] = '0';
-        str[1] = '\0';
+        str[i++] = '0';
+        str[i] = '\0';
         return;
     }
-    
-    int i = 0;
-    int is_negative = 0;
-    
-    if (num < 0) {
-        is_negative = 1;
+
+    if (num < 0 && base == 10) {
+        isNegative = 1;
         num = -num;
     }
-    
+
     while (num != 0) {
-        str[i++] = (num % 10) + '0';
-        num = num / 10;
+        int rem = num % base;
+        str[i++] = (rem > 9)? (rem-10) + 'a' : rem + '0';
+        num = num/base;
     }
-    
-    if (is_negative) {
+
+    if (isNegative)
         str[i++] = '-';
-    }
-    
+
     str[i] = '\0';
-    
+
     // Reverse the string
     int start = 0;
     int end = i - 1;
@@ -76,29 +63,39 @@ void int_to_string(int num, char* str) {
     }
 }
 
-void isr_handler(registers_t* regs) {
-    if (regs->int_no == 13) {
-        terminal_writestring("General Protection Fault (INT 13)\n");
-        terminal_writestring("Error Code: ");
-        // Convert error code to string and print it
-        char err_str[16];
-        int_to_string(regs->err_code, err_str);
+void isr_handler(struct registers* regs) {
+    if (regs->int_no < 32) {
+        terminal_writestring("EXCEPTION: ");
+        terminal_writestring(exception_messages[regs->int_no]);
+        terminal_writestring("\nError Code: 0x");
+        char err_str[32];
+        itoa(regs->err_code, err_str, 16);
         terminal_writestring(err_str);
-        terminal_writestring("\n");
-        
-        // Print relevant register values
-        terminal_writestring("CS: ");
-        int_to_string(regs->cs, err_str);
+        terminal_writestring("\nEIP: 0x");
+        itoa(regs->eip, err_str, 16);
         terminal_writestring(err_str);
-        terminal_writestring(" EIP: ");
-        int_to_string(regs->eip, err_str);
+        terminal_writestring("\nCS: 0x");
+        itoa(regs->cs, err_str, 16);
         terminal_writestring(err_str);
-        terminal_writestring("\n");
-    } else {
-        terminal_writestring("Interrupt received: ");
-        // Simple number to string conversion for the interrupt number
-        char int_str[3] = {'0' + (regs->int_no / 10), '0' + (regs->int_no % 10), '\0'};
-        terminal_writestring(int_str);
-        terminal_writestring("\n");
+        terminal_writestring("\nEFLAGS: 0x");
+        itoa(regs->eflags, err_str, 16);
+        terminal_writestring(err_str);
+        terminal_writestring("\nDS: 0x");
+        itoa(regs->ds, err_str, 16);
+        terminal_writestring(err_str);
+        terminal_writestring("\nSystem Halted!\n");
+        for(;;);
     }
+    else if (regs->int_no == ISR_SYSCALL) {
+        terminal_writestring("Syscall received!\n");
+    }
+}
+
+// Helper function to read from I/O ports
+static inline uint8_t inb(uint16_t port) {
+    uint8_t ret;
+    asm volatile ( "inb %1, %0"
+                  : "=a"(ret)
+                  : "Nd"(port) );
+    return ret;
 }
