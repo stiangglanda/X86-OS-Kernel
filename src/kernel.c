@@ -4,6 +4,8 @@
 #include "terminal.h"
 #include "gdt.h"
 #include "idt.h"
+#include "pic.h"
+#include "keyboard.h"
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -24,36 +26,25 @@ void kernel_main(void)
     gdt_initialize();
     terminal_writestring("GDT initialized\n");
 
+    terminal_writestring("Initializing PIC...\n");
+    pic_initialize();
+    terminal_writestring("PIC initialized\n");
+
     terminal_writestring("Initializing IDT...\n");
     idt_initialize();
     terminal_writestring("IDT initialized\n");
-    
-    // Clear interrupts first
-    asm volatile("cli");
+
+    terminal_writestring("Initializing keyboard...\n");
+    keyboard_initialize();
+    terminal_writestring("Keyboard initialized\n");
     
     // Enable interrupts
     asm volatile("sti");
     
     terminal_writestring("System running...\n");
-    
-    terminal_writestring("Triggering software interrupt...\n");
-    // Test software interrupt
-    //asm volatile("int $0x80");
+    terminal_writestring("Type something: ");
 
-    //// Cause a divide by zero exception using inline assembly
-    //asm volatile(
-    //    "mov $0, %%ecx\n"    // Set divisor to 0
-    //    "mov $10, %%eax\n"   // Set dividend to 10
-    //    "div %%ecx"          // Divide eax by ecx (will cause divide by zero)
-    //    :                    // No outputs
-    //    :                    // No inputs
-    //    : "eax", "ecx"      // Clobbers eax and ecx
-    //);
-    
-    terminal_writestring("After interrupt\n");
-    terminal_writestring("Entering infinite loop...\n");
-
-    // More stable infinite loop with a halt instruction
+    // Main loop - just halt CPU until next interrupt
     while(1) {
         asm volatile("hlt");
     }
