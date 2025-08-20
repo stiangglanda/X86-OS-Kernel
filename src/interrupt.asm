@@ -16,7 +16,10 @@
 [GLOBAL isr13]
 [GLOBAL isr14]
 [GLOBAL isr128]
+[GLOBAL irq1_handler]
+
 [EXTERN isr_handler]
+[EXTERN keyboard_handler] 
 
 ; Common ISR stub that calls C handler
 isr_common_stub:
@@ -56,6 +59,31 @@ isr_common_stub:
     ; Cleanup error code and interrupt number
     add esp, 8
     iret
+
+irq1_handler:
+    cli          ; Disable interrupts
+    pusha        ; Save all general purpose registers
+
+    mov ax, ds   ; Save the data segment
+    push eax
+
+    mov ax, 0x10 ; Load kernel data segment
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    call keyboard_handler ; Call our C keyboard code
+
+    pop eax      ; Restore data segment
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    popa         ; Restore all registers
+    sti          ; Re-enable interrupts
+    iret         ; Return from interrupt
 
 ; Divide by zero handler
 isr0:

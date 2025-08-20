@@ -3,6 +3,8 @@
 #include "pic.h"
 #include "terminal.h"
 
+extern void irq1_handler(void);
+
 // Simple circular buffer for keyboard input
 #define KEYBOARD_BUFFER_SIZE 256
 static char keyboard_buffer[KEYBOARD_BUFFER_SIZE];
@@ -28,42 +30,33 @@ static inline void outb(uint16_t port, uint8_t val) {
     asm volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
 }
 
-void keyboard_handler(struct registers* regs) {
-    // Read scancode directly without checking status first
+void keyboard_handler(void) {
+    // Read scancode from the keyboard's data port
     uint8_t scancode = inb(KEYBOARD_DATA_PORT);
-    
-    // Debug output
-    terminal_writestring("\nReceived scancode: 0x");
-    char debug[32];
-    itoa(scancode, debug, 16);
-    terminal_writestring(debug);
     
     // Handle key press (ignore releases and special codes)
     if (!(scancode & 0x80) && scancode < sizeof(scancode_to_ascii)) {
         char ascii = scancode_to_ascii[scancode];
         if (ascii != 0) {
             terminal_putchar(ascii);
-            terminal_writestring(" (ASCII: ");
-            terminal_putchar(ascii);
-            terminal_writestring(")\n");
         }
     }
 
-    // Just send EOI - don't try to clear buffer or wait
+    // You MUST send the EOI to the PIC before returning from the handler.
     pic_send_eoi(KEYBOARD_IRQ);
 }
 
 void keyboard_initialize(void) {
     terminal_writestring("Keyboard: Starting initialization...\n");
-    
-    // Register IRQ handler
-    idt_set_gate(33, (uint32_t)keyboard_handler, 0x08, 0x8E);
+    // Initialize the keyboard IRQ handler
+    idt_set_gate(33, (uint32_t)irq1_handler, 0x08, 0x8E);
     
     // Enable keyboard IRQ
     pic_unmask_irq(1);
     
     terminal_writestring("Keyboard initialized\n");
 }
+
 
 char keyboard_getchar(void) {
     // Return 0 if buffer is empty

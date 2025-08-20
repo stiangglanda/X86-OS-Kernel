@@ -14,7 +14,7 @@
 #define IRQ1                 1
 
 void keyboard_initialize(void);
-void keyboard_handler(struct registers* regs);
+void keyboard_handler(void);
 char keyboard_getchar(void);
 
 #endif
