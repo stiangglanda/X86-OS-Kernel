@@ -4,12 +4,10 @@
 #include <stdint.h>
 #include "isr.h"
 
-// Keyboard ports
 #define KEYBOARD_DATA_PORT    0x60
 #define KEYBOARD_STATUS_PORT  0x64
 #define KEYBOARD_COMMAND_PORT 0x64
 
-// Keyboard IRQ definitions
 #define KEYBOARD_IRQ         1
 #define IRQ1                 1
 

@@ -24,7 +24,6 @@ static const char* exception_messages[] = {
 };
 
 
-// Helper function for converting numbers to strings
 void itoa(int num, char* str, int base) {
     int i = 0;
     int isNegative = 0;
@@ -51,7 +50,6 @@ void itoa(int num, char* str, int base) {
 
     str[i] = '\0';
 
-    // Reverse the string
     int start = 0;
     int end = i - 1;
     while (start < end) {
@@ -93,7 +91,6 @@ void isr_handler(struct registers* regs) {
         terminal_writestring(str);
         terminal_writestring("\nSystem Halted!\n");
         
-        // Add infinite loop to prevent continuing after exception
         for(;;) {
             asm volatile("hlt");
         }

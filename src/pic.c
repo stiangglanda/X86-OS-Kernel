@@ -16,8 +16,8 @@ static inline uint8_t inb(uint16_t port) {
 }
 
 void pic_mask_all(void) {
-    outb(PIC1_DATA, 0xFF);  // Mask all interrupts on PIC1
-    outb(PIC2_DATA, 0xFF);  // Mask all interrupts on PIC2
+    outb(PIC1_DATA, 0xFF);
+    outb(PIC2_DATA, 0xFF);
 }
 
 void pic_unmask_irq(uint8_t irq) {
@@ -35,26 +35,20 @@ void pic_unmask_irq(uint8_t irq) {
 }
 
 void pic_initialize(void) {
-    // Mask all interrupts while initializing
     pic_mask_all();
 
-    // ICW1: Start initialization sequence
     outb(PIC1_COMMAND, 0x11);
     outb(PIC2_COMMAND, 0x11);
 
-    // ICW2: Set interrupt vector offsets
-    outb(PIC1_DATA, 0x20);  // PIC1: 0x20-0x27
-    outb(PIC2_DATA, 0x28);  // PIC2: 0x28-0x2F
+    outb(PIC1_DATA, 0x20);
+    outb(PIC2_DATA, 0x28);
 
-    // ICW3: Tell PICs how they are connected
-    outb(PIC1_DATA, 0x04);  // PIC1: IRQ2 connected to PIC2
-    outb(PIC2_DATA, 0x02);  // PIC2: Connected to IRQ2
+    outb(PIC1_DATA, 0x04);
+    outb(PIC2_DATA, 0x02);
 
-    // ICW4: Set 8086 mode
     outb(PIC1_DATA, 0x01);
     outb(PIC2_DATA, 0x01);
 
-    // Start with all interrupts masked
     pic_mask_all();
 }
 

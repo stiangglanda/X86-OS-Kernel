@@ -1,4 +1,3 @@
-; filepath: /home/stiangglanda/dev/X86-OS-Kernel/src/interrupt.asm
 [BITS 32]
 [GLOBAL isr0]
 [GLOBAL isr1]
@@ -73,7 +72,7 @@ irq1_handler:
     mov fs, ax
     mov gs, ax
 
-    call keyboard_handler ; Call our C keyboard code
+    call keyboard_handler ; Call C keyboard code
 
     pop eax      ; Restore data segment
     mov ds, ax

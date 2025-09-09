@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-// CPU exception numbers
 #define ISR_DIVIDE_BY_ZERO    0
 #define ISR_DEBUG             1
 #define ISR_NMI              2

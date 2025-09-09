@@ -18,7 +18,6 @@ struct idt_ptr {
     uint32_t base;
 } __attribute__((packed));
 
-// Function declarations
 void idt_initialize(void);
 void idt_set_gate(uint8_t num, uint32_t base, uint16_t selector, uint8_t flags);
 
