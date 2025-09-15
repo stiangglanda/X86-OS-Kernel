@@ -39,7 +39,9 @@ void kernel_main(void)
     asm volatile("sti");
     
     terminal_writestring("System running...\n");
-    terminal_writestring("Type something: ");
+    terminal_setcolor(vga_entry_color(VGA_COLOR_GREEN, VGA_COLOR_BLACK));
+    terminal_writestring("root@GlandOS: $ " );
+    terminal_setcolor(vga_entry_color(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLACK));
 
     while(1) {
         asm volatile("hlt");

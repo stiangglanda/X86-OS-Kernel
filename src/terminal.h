@@ -51,4 +51,6 @@ void terminal_write(const char* data, size_t size);
  
 void terminal_writestring(const char* data);
 
+void terminal_update_cursor(int x, int y);
+
 #endif
