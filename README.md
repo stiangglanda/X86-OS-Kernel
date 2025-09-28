@@ -1,5 +1,7 @@
 # 32-bit Operating System Kernel
 
+![GlandOS](https://github.com/user-attachments/assets/47e8fe97-b17f-4a52-9e7f-d322f53a22f4)
+
 ## Prerequisites
 
  - A text editor such as [VS Code](https://code.visualstudio.com/).
